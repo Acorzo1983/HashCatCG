@@ -71,3 +71,7 @@ https://acorzo1983.github.io/HashCatCG/
 ## Security Notice
 
 This is a command generator only and does not perform any actual password cracking. Always ensure you have proper authorization before attempting to crack password hashes.
+
+---
+
+Made with ❤️ by Albert C (2024)
