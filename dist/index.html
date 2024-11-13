@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashCat Command Generator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #00ff00;
+            --container-bg: #0a0a0a;
+            --input-bg: #111111;
+            --input-border: #00ff00;
+            --button-bg: #003300;
+            --button-hover: #004400;
+            --button-disabled: #002200;
+            --accent-glow: 0 0 10px #00ff00;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --text-color: #006600;
+            --container-bg: #ffffff;
+            --input-bg: #f5f5f5;
+            --input-border: #006600;
+            --button-bg: #008800;
+            --button-hover: #006600;
+            --button-disabled: #cccccc;
+            --accent-glow: none;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--text-color);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--text-color);
+            padding-bottom: 10px;
+        }
+
+        .theme-toggle {
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+            box-shadow: var(--accent-glow);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            box-shadow: var(--accent-glow);
+        }
+
+        .detected-hash {
+            background: var(--input-bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid var(--input-border);
+        }
+
+        button {
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--button-hover);
+            box-shadow: var(--accent-glow);
+        }
+
+        button:disabled {
+            background: var(--button-disabled);
+            cursor: not-allowed;
+            border-color: var(--button-disabled);
+        }
+
+        #command-output {
+            background: var(--input-bg);
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Share Tech Mono', monospace;
+            border: 1px solid var(--input-border);
+            margin: 10px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>HashCat Command Generator</h1>
+            <button class="theme-toggle" id="theme-toggle">Toggle Theme</button>
+        </div>
+        
+        <div class="input-group">
+            <label for="hash-input">Hash Input:</label>
+            <textarea id="hash-input" rows="3" placeholder="Paste your hash here..."></textarea>
+            <div id="detected-hash" class="detected-hash"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="charset">Character Set:</label>
+            <select id="charset">
+                <option value="numeric">Numeric (0-9)</option>
+                <option value="lowercase">Lowercase (a-z)</option>
+                <option value="uppercase">Uppercase (A-Z)</option>
+                <option value="special">Special Characters</option>
+                <option value="hex">Hexadecimal</option>
+                <option value="custom">Custom Set</option>
+            </select>
+
+            <div id="custom-charset-container" style="display: none;">
+                <label for="custom-charset">Custom Character Set:</label>
+                <input type="text" id="custom-charset" placeholder="Enter custom characters...">
+            </div>
+        </div>
+
+        <div class="input-group grid">
+            <div>
+                <label for="min-length">Minimum Length:</label>
+                <input type="number" id="min-length" value="1" min="1">
+            </div>
+            <div>
+                <label for="max-length">Maximum Length:</label>
+                <input type="number" id="max-length" value="8" min="1">
+            </div>
+        </div>
+
+        <button id="generate-btn">Generate Command</button>
+
+        <div class="input-group">
+            <label>Generated Command:</label>
+            <div id="command-output">Command will appear here...</div>
+            <button id="copy-btn" disabled>Copy Command</button>
+        </div>
+    </div>
+
+    <script>
+        const hashTypes = [
+            { id: 0, name: 'MD5', length: 32 },
+            { id: 100, name: 'SHA1', length: 40 },
+            { id: 1400, name: 'SHA2-256', length: 64 },
+            { id: 1700, name: 'SHA2-512', length: 128 },
+            { id: 3200, name: 'bcrypt', regex: /^\$2[abxy]\$\d+\$.{53}$/ },
+            { id: 1800, name: 'SHA-512 Unix', regex: /^\$6\$.{8}\$.{86}$/ },
+            { id: 500, name: 'MD5 Unix', regex: /^\$1\$.{8}\$.{22}$/ }
+        ];
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        let isDarkTheme = true;
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            document.documentElement.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+            themeToggle.textContent = `Toggle ${isDarkTheme ? 'Light' : 'Dark'}`;
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        function detectHashType(hash) {
+            const normalizedHash = hash.trim();
+            return hashTypes.filter(type => {
+                if (type.regex) {
+                    return type.regex.test(normalizedHash);
+                }
+                return type.length === normalizedHash.length;
+            });
+        }
+
+        function buildHashcatCommand(hash, hashType, config) {
+            const parts = ['hashcat'];
+            parts.push('-a 3'); // Brute-force attack
+            parts.push(`-m ${hashType.id}`);
+            parts.push(`'${hash}'`);
+
+            if (config.minLength !== config.maxLength) {
+                parts.push('--increment');
+                parts.push(`--increment-min ${config.minLength}`);
+                parts.push(`--increment-max ${config.maxLength}`);
+            }
+
+            const charsetMask = getCharsetMask(config);
+            parts.push(`'${charsetMask}'`);
+
+            return parts.join(' ');
+        }
+
+        function getCharsetMask(config) {
+            const masks = {
+                numeric: '?d',
+                lowercase: '?l',
+                uppercase: '?u',
+                special: '?s',
+                hex: '?h'
+            };
+
+            if (config.charset === 'custom' && config.customCharset) {
+                return `?1 -1 ${config.customCharset}`;
+            }
+
+            const mask = masks[config.charset] || '?d';
+            return mask.repeat(config.maxLength);
+        }
+
+        // DOM Elements
+        const hashInput = document.getElementById('hash-input');
+        const detectedHash = document.getElementById('detected-hash');
+        const charsetSelect = document.getElementById('charset');
+        const customCharsetContainer = document.getElementById('custom-charset-container');
+        const customCharset = document.getElementById('custom-charset');
+        const minLength = document.getElementById('min-length');
+        const maxLength = document.getElementById('max-length');
+        const generateBtn = document.getElementById('generate-btn');
+        const commandOutput = document.getElementById('command-output');
+        const copyBtn = document.getElementById('copy-btn');
+
+        // Event Listeners
+        hashInput.addEventListener('input', () => {
+            const hash = hashInput.value.trim();
+            const detected = detectHashType(hash);
+            
+            if (detected.length > 0) {
+                detectedHash.innerHTML = 'Detected Hash Types:<br>' + 
+                    detected.map(type => `${type.name} (Mode: ${type.id})`).join('<br>');
+            } else {
+                detectedHash.textContent = 'Hash type not detected';
+            }
+        });
+
+        charsetSelect.addEventListener('change', () => {
+            customCharsetContainer.style.display = 
+                charsetSelect.value === 'custom' ? 'block' : 'none';
+        });
+
+        generateBtn.addEventListener('click', () => {
+            const hash = hashInput.value.trim();
+            const detected = detectHashType(hash);
+            
+            if (detected.length === 0) {
+                alert('Please enter a valid hash');
+                return;
+            }
+
+            const config = {
+                charset: charsetSelect.value,
+                customCharset: customCharset.value,
+                minLength: parseInt(minLength.value),
+                maxLength: parseInt(maxLength.value)
+            };
+
+            const command = buildHashcatCommand(hash, detected[0], config);
+            commandOutput.textContent = command;
+            copyBtn.disabled = false;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(commandOutput.textContent);
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy Command';
+            }, 2000);
+        });
+    </script>
+  <footer class="footer">
+            <p>HashCat Command Generator with Love by Albert C 2024</p>
+            <p class="version">Version 1.0.0</p>
+        </footer>
+</body>
+</html>

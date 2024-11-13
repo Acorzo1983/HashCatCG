@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HashCat Command Generator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #00ff00;
+            --container-bg: #0a0a0a;
+            --input-bg: #111111;
+            --input-border: #00ff00;
+            --button-bg: #003300;
+            --button-hover: #004400;
+            --button-disabled: #002200;
+            --accent-glow: 0 0 10px #00ff00;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f0f0f0;
+            --text-color: #006600;
+            --container-bg: #ffffff;
+            --input-bg: #f5f5f5;
+            --input-border: #006600;
+            --button-bg: #008800;
+            --button-hover: #006600;
+            --button-disabled: #cccccc;
+            --accent-glow: none;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            max-width: 1200px;
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--text-color);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--text-color);
+            padding-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        textarea, input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            box-shadow: var(--accent-glow);
+        }
+
+        .detected-hash {
+            background: var(--input-bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid var(--input-border);
+        }
+
+        button {
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--button-hover);
+            box-shadow: var(--accent-glow);
+        }
+
+        button:disabled {
+            background: var(--button-disabled);
+            cursor: not-allowed;
+            border-color: var(--button-disabled);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .attack-options {
+            display: none;
+        }
+
+        .attack-options.active {
+            display: block;
+        }
+
+        .help-text {
+            font-size: 0.8em;
+            color: var(--text-color);
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        #command-output {
+            background: var(--input-bg);
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Share Tech Mono', monospace;
+            border: 1px solid var(--input-border);
+            margin: 10px 0;
+            min-height: 60px;
+        }
+
+        .theme-toggle {
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+            box-shadow: var(--accent-glow);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--text-color);
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>HashCat Command Generator</h1>
+            <button class="theme-toggle" id="theme-toggle">Toggle Theme</button>
+        </div>
+
+        <div class="section">
+            <h2>Hash Input</h2>
+            <div class="input-group">
+                <label for="hash-type">Input Type</label>
+                <select id="hash-type">
+                    <option value="text">Hash Text</option>
+                    <option value="file">Hash File</option>
+                </select>
+            </div>
+
+            <div class="input-group" id="hash-text-input">
+                <label for="hash-input">Hash Value</label>
+                <textarea id="hash-input" rows="3" placeholder="Paste your hash here..."></textarea>
+                <div id="detected-hash" class="detected-hash" style="display: none;"></div>
+            </div>
+
+            <div class="input-group" id="hash-file-input" style="display: none;">
+                <label for="hash-file">Hash File Path</label>
+                <input type="text" id="hash-file" placeholder="/path/to/hashes.txt">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Attack Mode</h2>
+            <div class="input-group">
+                <label for="attack-mode">Select Attack Mode</label>
+                <select id="attack-mode">
+                    <option value="0">Dictionary Attack (-a 0)</option>
+                    <option value="1">Combinator Attack (-a 1)</option>
+                    <option value="3">Brute Force (-a 3)</option>
+                    <option value="6">Hybrid Dict + Mask (-a 6)</option>
+                    <option value="7">Hybrid Mask + Dict (-a 7)</option>
+                </select>
+                <div class="help-text" id="attack-help"></div>
+            </div>
+
+            <!-- Dictionary Attack Options -->
+            <div id="dictionary-options" class="attack-options">
+                <div class="input-group">
+                    <label for="wordlist">Wordlist Path</label>
+                    <input type="text" id="wordlist" placeholder="/path/to/wordlist.txt">
+                </div>
+            </div>
+
+            <!-- Combinator Attack Options -->
+            <div id="combinator-options" class="attack-options">
+                <div class="grid">
+                    <div class="input-group">
+                        <label for="wordlist1">First Wordlist Path</label>
+                        <input type="text" id="wordlist1" placeholder="/path/to/wordlist1.txt">
+                    </div>
+                    <div class="input-group">
+                        <label for="wordlist2">Second Wordlist Path</label>
+                        <input type="text" id="wordlist2" placeholder="/path/to/wordlist2.txt">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brute Force Options -->
+            <div id="bruteforce-options" class="attack-options">
+                <div class="grid">
+                    <div class="input-group">
+                        <label for="min-length">Minimum Length</label>
+                        <input type="number" id="min-length" value="1" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="max-length">Maximum Length</label>
+                        <input type="number" id="max-length" value="8" min="1">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="charset">Character Set</label>
+                    <select id="charset">
+                        <option value="numeric">Numeric (0-9)</option>
+                        <option value="lowercase">Lowercase (a-z)</option>
+                        <option value="uppercase">Uppercase (A-Z)</option>
+                        <option value="alpha">Alpha (a-z, A-Z)</option>
+                        <option value="alphanumeric">Alphanumeric (a-z, A-Z, 0-9)</option>
+                        <option value="special">Special Characters</option>
+                        <option value="all">All Characters</option>
+                        <option value="custom">Custom Set</option>
+                    </select>
+                </div>
+                <div id="custom-charset" style="display: none;">
+                    <label for="custom-chars">Custom Characters</label>
+                    <input type="text" id="custom-chars" placeholder="Enter custom characters...">
+                </div>
+            </div>
+
+            <!-- Hybrid Attack Options -->
+            <div id="hybrid-options" class="attack-options">
+                <div class="input-group">
+                    <label for="hybrid-wordlist">Wordlist Path</label>
+                    <input type="text" id="hybrid-wordlist" placeholder="/path/to/wordlist.txt">
+                </div>
+                <div class="input-group">
+                    <label for="mask-pattern">Mask Pattern</label>
+                    <input type="text" id="mask-pattern" placeholder="?d?d?d?d">
+                    <div class="help-text">
+                        ?l = lowercase, ?u = uppercase, ?d = digit, ?s = special<br>
+                        Example: ?d?d?d?d = four digits
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Additional Options</h2>
+            <div class="grid">
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="optimized-kernel"> Enable Optimized Kernel
+                    </label>
+                </div>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="workload-profile"> Enable Workload Profile
+                    </label>
+                    <select id="workload-value" disabled>
+                        <option value="1">Low</option>
+                        <option value="2">Default</option>
+                        <option value="3">High</option>
+                        <option value="4">Insane</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Generated Command</h2>
+            <div id="command-output">Command will appear here...</div>
+            <button id="generate-btn">Generate Command</button>
+            <button id="copy-btn" disabled>Copy Command</button>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        let isDarkTheme = true;
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            document.documentElement.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+            themeToggle.textContent = `Toggle ${isDarkTheme ? 'Light' : 'Dark'}`;
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Hash Type Detection
+        const hashTypes = [
+            { id: 0, name: 'MD5', length: 32 },
+            { id: 100, name: 'SHA1', length: 40 },
+            { id: 1400, name: 'SHA2-256', length: 64 },
+            { id: 1700, name: 'SHA2-512', length: 128 },
+            { id: 3200, name: 'bcrypt', regex: /^\$2[abxy]\$\d+\$.{53}$/ },
+            { id: 1800, name: 'SHA-512 Unix', regex: /^\$6\$.{8}\$.{86}$/ },
+            { id: 500, name: 'MD5 Unix', regex: /^\$1\$.{8}\$.{22}$/ },
+            { id: 2500, name: 'WPA/WPA2', regex: /^[0-9a-f]{32}$/ }
+        ];
+
+        // UI Elements
+        const hashTypeSelect = document.getElementById('hash-type');
+        const hashTextInput = document.getElementById('hash-text-input');
+        const hashFileInput = document.getElementById('hash-file-input');
+        const hashInput = document.getElementById('hash-input');
+        const hashFile = document.getElementById('hash-file');
+        const detectedHash = document.getElementById('detected-hash');
+        const attackMode = document.getElementById('attack-mode');
+        const attackHelp = document.getElementById('attack-help');
+        const generateBtn = document.getElementById('generate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const commandOutput = document.getElementById('command-output');
+        const optimizedKernel = document.getElementById('optimized-kernel');
+        const workloadProfile = document.getElementById('workload-profile');
+        const workloadValue = document.getElementById('workload-value');
+        const charset = document.getElementById('charset');
+        const customCharset = document.getElementById('custom-charset');
+        const customChars = document.getElementById('custom-chars');
+
+        // Attack Mode Help Text
+        const attackHelpText = {
+            '0': 'Straight dictionary attack using a wordlist',
+            '1': 'Combines words from two wordlists',
+            '3': 'Brute force attack trying all possible combinations',
+            '6': 'Dictionary words with a mask pattern appended',
+            '7': 'Mask pattern with dictionary words appended'
+        };
+
+        // Event Listeners
+        hashTypeSelect.addEventListener('change', () => {
+            hashTextInput.style.display = hashTypeSelect.value === 'text' ? 'block' : 'none';
+            hashFileInput.style.display = hashTypeSelect.value === 'file' ? 'block' : 'none';
+        });
+
+        attackMode.addEventListener('change', () => {
+            attackHelp.textContent = attackHelpText[attackMode.value];
+            document.querySelectorAll('.attack-options').forEach(el => el.classList.remove('active'));
+            
+            switch(attackMode.value) {
+                case '0':
+                    document.getElementById('dictionary-options').classList.add('active');
+                    break;
+                case '1':
+                    document.getElementById('combinator-options').classList.add('active');
+                    break;
+                case '3':
+                    document.getElementById('bruteforce-options').classList.add('active');
+                    break;
+                case '6':
+                case '7':
+                    document.getElementById('hybrid-options').classList.add('active');
+                    break;
+            }
+        });
+
+        charset.addEventListener('change', () => {
+            customCharset.style.display = charset.value === 'custom' ? 'block' : 'none';
+        });
+
+        workloadProfile.addEventListener('change', () => {
+            workloadValue.disabled = !workloadProfile.checked;
+        });
+
+        function detectHashType(hash) {
+            const normalizedHash = hash.trim();
+            return hashTypes.filter(type => {
+                if (type.regex) {
+                    return type.regex.test(normalizedHash);
+                }
+                return type.length === normalizedHash.length;
+            });
+        }
+
+        hashInput.addEventListener('input', () => {
+            const hash = hashInput.value.trim();
+            const detected = detectHashType(hash);
+            
+            if (detected.length > 0) {
+                detectedHash.style.display = 'block';
+                detectedHash.innerHTML = 'Detected Hash Types:<br>' + 
+                    detected.map(type => `${type.name} (Mode: ${type.id})`).join('<br>');
+            } else {
+                detectedHash.style.display = 'none';
+            }
+        });
+
+        function getCharsetMask(charsetType, customValue) {
+            const masks = {
+                numeric: '?d',
+                lowercase: '?l',
+                uppercase: '?u',
+                alpha: '?l?u',
+                alphanumeric: '?l?u?d',
+                special: '?s',
+                all: '?a',
+                custom: customValue
+            };
+            return masks[charsetType] || '?a';
+        }
+
+        function buildCommand() {
+            const parts = ['hashcat'];
+            
+            // Attack mode
+            parts.push(`-a ${attackMode.value}`);
+
+            // Hash type (using first detected, or 0 as fallback)
+            const hash = hashInput.value.trim();
+            const detected = detectHashType(hash);
+            const hashType = detected.length > 0 ? detected[0].id : 0;
+            parts.push(`-m ${hashType}`);
+
+            // Optimized kernel
+            if (optimizedKernel.checked) {
+                parts.push('--optimized-kernel-enable');
+            }
+
+            // Workload profile
+            if (workloadProfile.checked) {
+                parts.push(`-w ${workloadValue.value}`);
+            }
+
+            // Attack-specific options
+            switch(attackMode.value) {
+                case '0': // Dictionary
+                    parts.push(`'${document.getElementById('wordlist').value}'`);
+                    break;
+                    
+                case '1': // Combinator
+                    parts.push(`'${document.getElementById('wordlist1').value}'`);
+                    parts.push(`'${document.getElementById('wordlist2').value}'`);
+                    break;
+                    
+                case '3': // Brute Force
+                    const minLen = document.getElementById('min-length').value;
+                    const maxLen = document.getElementById('max-length').value;
+                    if (minLen !== maxLen) {
+                        parts.push('--increment');
+                        parts.push(`--increment-min ${minLen}`);
+                        parts.push(`--increment-max ${maxLen}`);
+                    }
+                    const charsetMask = getCharsetMask(charset.value, customChars.value);
+                    parts.push(`'${charsetMask.repeat(maxLen)}'`);
+                    break;
+                    
+                case '6': // Hybrid Dict + Mask
+                case '7': // Hybrid Mask + Dict
+                    const wordlist = document.getElementById('hybrid-wordlist').value;
+                    const pattern = document.getElementById('mask-pattern').value;
+                    if (attackMode.value === '6') {
+                        parts.push(`'${wordlist}'`);
+                        parts.push(`'${pattern}'`);
+                    } else {
+                        parts.push(`'${pattern}'`);
+                        parts.push(`'${wordlist}'`);
+                    }
+                    break;
+            }
+
+            // Hash input (must be last)
+            if (hashTypeSelect.value === 'file') {
+                parts.push(`'${hashFile.value}'`);
+            } else {
+                parts.push(`'${hash}'`);
+            }
+
+            return parts.join(' ');
+        }
+
+        generateBtn.addEventListener('click', () => {
+            const command = buildCommand();
+            commandOutput.textContent = command;
+            copyBtn.disabled = false;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(commandOutput.textContent);
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy Command';
+            }, 2000);
+        });
+
+        // Initialize UI
+        attackMode.dispatchEvent(new Event('change'));
+    </script>
+
+    <footer>
+        <p>HashCat Command Generator with ❤️ by Albert C</p>
+        <p class="version">Version 1.0.0</p>
+    </footer>
+</body>
+</html>
