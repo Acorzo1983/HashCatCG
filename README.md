@@ -2,7 +2,9 @@
 A modern web application for generating HashCat commands with an intuitive user interface. This tool helps security professionals and penetration testers generate proper HashCat commands without memorizing all the options and switches.
 
 <img alt="HashCat Command Generator" src="/imgs/thumb_image.png"> </img>
+
 ## Features
+https://acorzo1983.github.io/HashCatCG/
 
 ### Hash Detection
 - Automatically detects hash types based on pattern and length
